@@ -28,8 +28,8 @@ export const geminiService = {
   /**
    * Get structured destination details including flights, visa, and packages.
    */
-  async getDestinationDetails(destination: string) {
-    return await this.callProxy("getDestinationDetails", { destination });
+  async getDestinationDetails(destination: string, systemPrompt?: string) {
+    return await this.callProxy("getDestinationDetails", { destination, systemPrompt });
   },
 
   /**

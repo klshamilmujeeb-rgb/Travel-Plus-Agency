@@ -1,6 +1,6 @@
 import { GoogleGenAI, Type } from "@google/genai";
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "" });
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || process.env.GEMINI_API_KEY1 || "" });
 
 export const handler = async (event: any) => {
   if (event.httpMethod !== "POST") {
@@ -22,15 +22,17 @@ export const handler = async (event: any) => {
     }
 
     if (action === "getDestinationDetails") {
-      const response = await ai.models.generateContent({
-        model: "gemini-3-flash-preview",
-        contents: `Provide comprehensive travel information for "${payload.destination}". 
+      const prompt = payload.systemPrompt || `Provide comprehensive travel information for the requested destination. 
         Include:
         1. Flight trends (typical prices from India, airlines).
         2. Visa requirements for Indian citizens.
         3. Top 3 tour packages with prices and durations.
         4. Best time to visit.
-        5. A brief description.`,
+        5. A brief description.`;
+
+      const response = await ai.models.generateContent({
+        model: "gemini-3-flash-preview",
+        contents: `${prompt}\n\nDestination: "${payload.destination}"`,
         config: {
           tools: [{ googleSearch: {} } as any],
           responseMimeType: "application/json",

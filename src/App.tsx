@@ -22,7 +22,12 @@ import {
   Headset
 } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
+import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import netlifyIdentity from 'netlify-identity-widget';
 import { geminiService } from './services/geminiService';
+import { useApp } from './context/AppContext';
+import Login from './components/Admin/Login';
+import AdminDashboard from './components/Admin/AdminDashboard';
 
 // --- Types ---
 
@@ -70,9 +75,30 @@ interface DestinationData {
 
 // --- Components ---
 
+const PaperPlane = () => (
+  <motion.div
+    initial={{ x: -100, y: '20vh', rotate: 15, opacity: 0 }}
+    animate={{ 
+      x: '110vw', 
+      y: ['20vh', '15vh', '25vh', '20vh'],
+      opacity: [0, 1, 1, 0]
+    }}
+    transition={{ 
+      duration: 15, 
+      repeat: Infinity, 
+      ease: "linear",
+      opacity: { times: [0, 0.1, 0.9, 1] }
+    }}
+    className="fixed z-0 pointer-events-none text-primary/20"
+  >
+    <Plane size={40} />
+  </motion.div>
+);
+
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const { settings } = useApp();
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 50);
@@ -102,7 +128,7 @@ const Navbar = () => {
               </a>
             ))}
             <a 
-              href="https://wa.me/917902745614" 
+              href={`https://wa.me/${settings.whatsappNumber}`} 
               target="_blank" 
               rel="noreferrer"
               className="bg-primary text-white px-8 py-2.5 rounded-full text-[14px] font-bold hover:bg-blue-700 transition-all shadow-[0_10px_20px_rgba(0,113,227,0.2)]"
@@ -138,7 +164,7 @@ const Navbar = () => {
               </a>
             ))}
             <a 
-              href="https://wa.me/917902745614"
+              href={`https://wa.me/${settings.whatsappNumber}`}
               target="_blank"
               rel="noreferrer"
               className="bg-primary text-white px-8 py-5 rounded-2xl font-bold text-xl shadow-xl shadow-primary/20 text-center"
@@ -250,10 +276,16 @@ const Hero = ({ onSearch }: { onSearch: (query: string) => void }) => {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 md:gap-8 justify-center items-center px-4">
-            <button className="w-full sm:w-auto bg-primary text-white px-10 md:px-14 py-4 md:py-5 rounded-full text-base md:text-lg font-bold hover:scale-105 active:scale-95 transition-all shadow-[0_20px_40px_rgba(0,113,227,0.3)] flex items-center justify-center gap-3">
+            <button 
+              onClick={() => document.getElementById('packages')?.scrollIntoView({ behavior: 'smooth' })}
+              className="w-full sm:w-auto bg-primary text-white px-10 md:px-14 py-4 md:py-5 rounded-full text-base md:text-lg font-bold hover:scale-105 active:scale-95 transition-all shadow-[0_20px_40px_rgba(0,113,227,0.3)] flex items-center justify-center gap-3"
+            >
               Explore Packages <ChevronRight className="w-5 h-5" />
             </button>
-            <button className="w-full sm:w-auto text-slate-900 px-10 md:px-14 py-4 md:py-5 rounded-full text-base md:text-lg font-bold hover:bg-slate-100 transition-all flex items-center justify-center gap-2">
+            <button 
+              onClick={() => document.getElementById('visa-services')?.scrollIntoView({ behavior: 'smooth' })}
+              className="w-full sm:w-auto text-slate-900 px-10 md:px-14 py-4 md:py-5 rounded-full text-base md:text-lg font-bold hover:bg-slate-100 transition-all flex items-center justify-center gap-2"
+            >
               Visa Services <ArrowRight className="w-5 h-5" />
             </button>
           </div>
@@ -264,34 +296,12 @@ const Hero = ({ onSearch }: { onSearch: (query: string) => void }) => {
 };
 
 const VisaSection = () => {
-  const visaTypes: VisaType[] = [
-    {
-      id: 'tourist',
-      name: 'Tourist Visa',
-      docs: ['Passport (6 months validity)', 'Recent Photos', 'Bank Statement', 'Return Tickets'],
-      steps: ['Document Review', 'Form Submission', 'Appointment Booking', 'Visa Grant'],
-      fee: 'Starting from ₹4,500',
-      time: '5-7 Working Days'
-    },
-    {
-      id: 'business',
-      name: 'Business Visa',
-      docs: ['Invitation Letter', 'Company Profile', 'Tax Returns', 'Covering Letter'],
-      steps: ['Verification', 'Submission', 'Interview Prep', 'Visa Collection'],
-      fee: 'Starting from ₹8,000',
-      time: '10-15 Working Days'
-    },
-    {
-      id: 'student',
-      name: 'Student Visa',
-      docs: ['Offer Letter', 'Financial Proof', 'Academic Records', 'English Proficiency'],
-      steps: ['I-20/CAS Issuance', 'Fee Payment', 'Biometrics', 'Interview'],
-      fee: 'Varies by Country',
-      time: '3-6 Weeks'
-    }
-  ];
-
+  const { visaTypes, settings } = useApp();
   const [activeVisa, setActiveVisa] = useState(visaTypes[0]);
+
+  useEffect(() => {
+    setActiveVisa(visaTypes[0]);
+  }, [visaTypes]);
 
   return (
     <section id="visa-services" className="py-20 md:py-40 px-4 md:px-6 bg-white">
@@ -327,7 +337,7 @@ const VisaSection = () => {
               <div>
                 <h4 className="text-lg font-bold text-slate-900 mb-1 md:mb-2">Need Personalized Help?</h4>
                 <p className="text-slate-600 mb-4 text-sm md:text-base">Our experts are ready to assist you with specific requirements.</p>
-                <a href="tel:+917902745614" className="text-primary font-bold flex items-center gap-2 hover:gap-3 transition-all text-sm md:text-base">
+                <a href={`tel:+${settings.whatsappNumber}`} className="text-primary font-bold flex items-center gap-2 hover:gap-3 transition-all text-sm md:text-base">
                   Call Consultant <ArrowRight className="w-4 h-4" />
                 </a>
               </div>
@@ -391,6 +401,7 @@ const VisaSection = () => {
 
 const BookingModal = ({ isOpen, onClose, selectedPackage }: any) => {
   const [step, setStep] = useState(1);
+  const { settings } = useApp();
 
   if (!isOpen) return null;
 
@@ -475,6 +486,12 @@ const BookingModal = ({ isOpen, onClose, selectedPackage }: any) => {
               </div>
               <h4 className="text-2xl md:text-3xl font-bold mb-3 md:mb-4">Booking Confirmed!</h4>
               <p className="text-slate-500 text-base md:text-lg mb-6 md:mb-8">Our team in Kozhikode will contact you shortly to finalize the details.</p>
+              <button 
+                onClick={() => window.open(`https://wa.me/${settings.whatsappNumber}?text=Hi, I just booked the ${selectedPackage?.title} package. Please confirm my booking.`, '_blank')}
+                className="bg-green-500 text-white px-8 py-3 rounded-full font-bold flex items-center gap-2 mx-auto hover:bg-green-600 transition-all"
+              >
+                Chat on WhatsApp <Headset className="w-5 h-5" />
+              </button>
             </div>
           )}
 
@@ -551,35 +568,7 @@ const PackageCard = ({ pkg, onBook }: any) => (
 );
 
 const Packages = ({ onBook }: any) => {
-  const packages: Package[] = [
-    {
-      id: 'maldives',
-      title: "Maldives Escape",
-      location: "Maldives",
-      price: "45,000",
-      duration: "4N/5D",
-      image: "https://images.unsplash.com/photo-1514282401047-d79a71a590e8?auto=format&fit=crop&q=80&w=800",
-      description: "Experience luxury overwater villas and crystal clear waters in the heart of the Indian Ocean."
-    },
-    {
-      id: 'dubai',
-      title: "Dubai City Lights",
-      location: "UAE",
-      price: "38,000",
-      duration: "5N/6D",
-      image: "https://images.unsplash.com/photo-1512453979798-5ea266f8880c?auto=format&fit=crop&q=80&w=800",
-      description: "From the Burj Khalifa to desert safaris, discover the ultimate modern oasis."
-    },
-    {
-      id: 'bali',
-      title: "Bali Adventure",
-      location: "Indonesia",
-      price: "52,000",
-      duration: "6N/7D",
-      image: "https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&q=80&w=800",
-      description: "Immerse yourself in the spiritual beauty and lush landscapes of the Island of Gods."
-    }
-  ];
+  const { packages } = useApp();
 
   return (
     <section id="packages" className="py-20 md:py-40 px-4 md:px-6 bg-white">
@@ -606,6 +595,7 @@ const Packages = ({ onBook }: any) => {
 };
 
 const Footer = () => {
+  const { settings } = useApp();
   return (
     <footer className="bg-slate-900 text-white py-20 md:py-32 px-4 md:px-6">
       <div className="max-w-7xl mx-auto">
@@ -655,8 +645,8 @@ const Footer = () => {
                 <div className="w-5 h-5 md:w-6 md:h-6 text-primary flex-shrink-0 flex items-center justify-center">
                   <Play className="w-3.5 h-3.5 md:w-4 md:h-4 fill-current rotate-90" />
                 </div>
-                <a href="https://wa.me/917902745614" target="_blank" rel="noreferrer" className="hover:text-white transition-colors text-sm md:text-base">
-                  +91 7902745614
+                <a href={`https://wa.me/${settings.whatsappNumber}`} target="_blank" rel="noreferrer" className="hover:text-white transition-colors text-sm md:text-base">
+                  +{settings.whatsappNumber}
                 </a>
               </li>
             </ul>
@@ -676,6 +666,7 @@ const Footer = () => {
 };
 
 const SearchResults = ({ data, onBack }: { data: DestinationData, onBack: () => void }) => {
+  const { settings } = useApp();
   return (
     <motion.div 
       initial={{ opacity: 0 }}
@@ -726,7 +717,10 @@ const SearchResults = ({ data, onBack }: { data: DestinationData, onBack: () => 
                   </div>
                 </div>
                 <p className="text-sm text-slate-500 italic mt-4">"{data.flights.tips}"</p>
-                <button className="w-full bg-primary text-white py-4 rounded-2xl font-bold mt-4 hover:bg-blue-700 transition-all">
+                <button 
+                  onClick={() => window.open(`https://wa.me/${settings.whatsappNumber}?text=Hi, I'm interested in booking flights to ${data.destination}. Average price mentioned: ${data.flights.averagePrice}.`, '_blank')}
+                  className="w-full bg-primary text-white py-4 rounded-2xl font-bold mt-4 hover:bg-blue-700 transition-all"
+                >
                   Book Flights
                 </button>
               </div>
@@ -762,7 +756,10 @@ const SearchResults = ({ data, onBack }: { data: DestinationData, onBack: () => 
                     ))}
                   </ul>
                 </div>
-                <button className="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold mt-4 hover:bg-slate-800 transition-all">
+                <button 
+                  onClick={() => window.open(`https://wa.me/${settings.whatsappNumber}?text=Hi, I want to apply for a visa to ${data.destination}. Requirement: ${data.visa.requirement}.`, '_blank')}
+                  className="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold mt-4 hover:bg-slate-800 transition-all"
+                >
                   Apply for Visa
                 </button>
               </div>
@@ -790,7 +787,10 @@ const SearchResults = ({ data, onBack }: { data: DestinationData, onBack: () => 
                       </li>
                     ))}
                   </ul>
-                  <button className="w-full border-2 border-primary text-primary py-3 rounded-xl font-bold hover:bg-primary hover:text-white transition-all">
+                  <button 
+                    onClick={() => window.open(`https://wa.me/${settings.whatsappNumber}?text=Hi, I'm interested in the ${pkg.title} package for ${data.destination}. Price: ${pkg.price}.`, '_blank')}
+                    className="w-full border-2 border-primary text-primary py-3 rounded-xl font-bold hover:bg-primary hover:text-white transition-all"
+                  >
                     View Details
                   </button>
                 </div>
@@ -808,6 +808,35 @@ export default function TravelPlusApp() {
   const [selectedPackage, setSelectedPackage] = useState<Package | null>(null);
   const [view, setView] = useState<'home' | 'results'>('home');
   const [destinationData, setDestinationData] = useState<DestinationData | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(() => !!netlifyIdentity.currentUser());
+  const { settings } = useApp();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    netlifyIdentity.init();
+    
+    const handleLogin = (user: any) => {
+      setIsAuthenticated(true);
+      navigate('/admin');
+      netlifyIdentity.close();
+    };
+
+    const handleLogout = () => {
+      setIsAuthenticated(false);
+      navigate('/');
+    };
+
+    netlifyIdentity.on('login', handleLogin);
+    netlifyIdentity.on('logout', handleLogout);
+
+    // Initial check
+    setIsAuthenticated(!!netlifyIdentity.currentUser());
+
+    return () => {
+      netlifyIdentity.off('login', handleLogin);
+      netlifyIdentity.off('logout', handleLogout);
+    };
+  }, [navigate]);
 
   const handleBook = (pkg: Package) => {
     setSelectedPackage(pkg);
@@ -816,7 +845,7 @@ export default function TravelPlusApp() {
 
   const handleSearch = async (query: string) => {
     try {
-      const data = await geminiService.getDestinationDetails(query);
+      const data = await geminiService.getDestinationDetails(query, settings.systemPrompt);
       setDestinationData(data);
       setView('results');
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -826,8 +855,18 @@ export default function TravelPlusApp() {
     }
   };
 
-  return (
+  const handleLogout = () => {
+    netlifyIdentity.logout();
+  };
+
+  const LandingPage = () => (
     <div className="min-h-screen selection:bg-primary/20">
+      {settings.alertBanner.enabled && (
+        <div className="bg-primary text-white py-2 px-4 text-center text-xs md:text-sm font-bold tracking-tight">
+          {settings.alertBanner.text}
+        </div>
+      )}
+      <PaperPlane />
       <Navbar />
       <main>
         <AnimatePresence mode="wait">
@@ -856,7 +895,7 @@ export default function TravelPlusApp() {
       
       {/* Floating WhatsApp */}
       <a 
-        href="https://wa.me/917902745614" 
+        href={`https://wa.me/${settings.whatsappNumber}`} 
         target="_blank" 
         rel="noreferrer"
         className="fixed bottom-6 right-6 md:bottom-10 md:right-10 z-[90] bg-green-500 text-white p-4 md:p-5 rounded-full shadow-2xl hover:scale-110 transition-all active:scale-95 group"
@@ -877,6 +916,33 @@ export default function TravelPlusApp() {
         )}
       </AnimatePresence>
     </div>
+  );
+
+  return (
+    <Routes>
+      <Route path="/" element={<LandingPage />} />
+      <Route 
+        path="/admin" 
+        element={
+          isAuthenticated ? (
+            <AdminDashboard onLogout={handleLogout} />
+          ) : (
+            <Navigate to="/login" replace />
+          )
+        } 
+      />
+      <Route 
+        path="/login" 
+        element={
+          isAuthenticated ? (
+            <Navigate to="/admin" replace />
+          ) : (
+            <Login />
+          )
+        } 
+      />
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
   );
 }
 
